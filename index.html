@@ -1,0 +1,876 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0d3a25">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Carreira do Davi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Andika:wght@400;700&family=Lilita+One&display=swap">
+<style>
+/* Layout: uma tela de app de celular sobre um gramado noturno com faixas de corte; cartão de jogador alvinegro como perfil; um único visual escuro de estádio (escolha deliberada) */
+:root{
+  --grama:#0d3a25; --grama-2:#11472f; --cal:#f3f6ef; --preto:#0a0d0b; --ouro:#f4c542; --ouro-esc:#b58a1c;
+  --certo:#8be38f; --quase:#ffb36b; --suave:#b9d3c2; --painel:rgba(5,18,11,.78); --linha:rgba(243,246,239,.22);
+  --camisa:#f3f6ef; --detalhe:#0a0d0b;
+  --f-display:"Lilita One","Arial Rounded MT Bold","Trebuchet MS",system-ui,sans-serif;
+  --f-ler:"Andika","Trebuchet MS",Verdana,system-ui,sans-serif;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+body{
+  background:var(--grama); color:var(--cal); font-family:var(--f-ler); font-size:18px; line-height:1.4;
+  background-image:repeating-linear-gradient(180deg,var(--grama) 0 72px,var(--grama-2) 72px 144px);
+  background-attachment:fixed;
+  padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px));
+  -webkit-tap-highlight-color:transparent; overscroll-behavior:none;
+}
+.app{max-width:560px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;padding-block:16px}
+.tela{display:flex;flex-direction:column;gap:16px;flex:1}
+h1,h2,h3{font-family:var(--f-display);font-weight:400;margin:0;text-wrap:balance;letter-spacing:.5px}
+h1{font-size:2.2rem;line-height:1.05}
+h2{font-size:1.7rem}
+p{margin:0}
+.rotulo{font-family:var(--f-display);font-size:.85rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--suave)}
+
+/* Botões de jogo: grandes, com "sola" embaixo */
+.btn{
+  font-family:var(--f-display);font-size:1.35rem;letter-spacing:.5px;border:0;border-radius:18px;
+  padding:16px 20px;min-height:60px;cursor:pointer;color:var(--preto);background:var(--cal);
+  box-shadow:0 6px 0 #9aa79c;transition:transform .08s,box-shadow .08s;touch-action:manipulation;
+}
+.btn:active{transform:translateY(4px);box-shadow:0 2px 0 #9aa79c}
+.btn:focus-visible,.op:focus-visible,.peca:focus-visible,.palavra:focus-visible{outline:4px solid var(--ouro);outline-offset:3px}
+.btn-ouro{background:var(--ouro);box-shadow:0 6px 0 var(--ouro-esc)}
+.btn-ouro:active{box-shadow:0 2px 0 var(--ouro-esc)}
+.btn-grande{font-size:1.9rem;min-height:84px}
+.btn-fantasma{background:transparent;color:var(--cal);border:2px solid var(--linha);box-shadow:none}
+.btn-fantasma:active{box-shadow:none}
+.linha-btns{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* Cartão do jogador */
+.cartao{
+  position:relative;overflow:hidden;border-radius:22px;padding:18px;
+  background:linear-gradient(160deg,#1a1f1c 0%,var(--preto) 70%);
+  border:3px solid var(--ouro);box-shadow:0 10px 30px rgba(0,0,0,.45);
+  display:grid;grid-template-columns:auto 1fr;gap:4px 16px;align-items:center;
+}
+.cartao::before{content:"";position:absolute;inset:-40% -10% auto auto;width:60%;height:180%;background:var(--cal);opacity:.07;transform:rotate(25deg)}
+.ovr{font-family:var(--f-display);color:var(--ouro);font-size:3.4rem;line-height:.9;text-align:center}
+.ovr small{display:block;font-size:1rem;color:var(--cal);letter-spacing:2px}
+.cartao .avatar{width:100%;max-width:170px;justify-self:center}
+.avatar{display:block;max-width:100%}
+
+/* Meu jogador (editor do personagem) */
+.vitrine{display:flex;justify-content:center;background:radial-gradient(circle at 50% 70%,rgba(244,197,66,.25),transparent 65%);border-radius:22px;padding-top:8px}
+.vitrine .avatar{width:200px}
+.paleta{display:flex;flex-wrap:wrap;gap:10px}
+.cor{width:48px;height:48px;border-radius:50%;border:3px solid var(--linha);cursor:pointer}
+.cor[aria-pressed="true"]{border-color:var(--ouro);box-shadow:0 0 0 3px var(--ouro)}
+.escolhas.tres{grid-template-columns:repeat(3,1fr)}
+.cartao-nome{grid-column:1/-1;font-family:var(--f-display);font-size:1.9rem;text-align:center;text-transform:uppercase;letter-spacing:2px;border-top:2px solid var(--linha);padding-top:8px;margin-top:4px}
+.cartao-cat{grid-column:1/-1;text-align:center;color:var(--ouro);font-family:var(--f-display);letter-spacing:1px}
+.stats{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center;font-variant-numeric:tabular-nums}
+.stats b{display:block;font-family:var(--f-display);font-size:1.5rem;font-weight:400}
+.stats span{font-size:.8rem;letter-spacing:1px;color:var(--suave)}
+
+.barra{height:18px;border-radius:9px;background:rgba(0,0,0,.4);border:2px solid var(--linha);overflow:hidden}
+.barra i{display:block;height:100%;background:linear-gradient(90deg,var(--ouro),#ffe08a);border-radius:9px;transition:width .6s}
+.painel{background:var(--painel);border:2px solid var(--linha);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:10px}
+
+/* Jogo */
+.placar{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.placar .btn{min-height:48px;padding:8px 14px;font-size:1rem}
+.dots{display:flex;gap:6px}
+.dots i{width:16px;height:16px;border-radius:50%;background:rgba(0,0,0,.4);border:2px solid var(--linha)}
+.dots i.feito{background:var(--cal)}
+.dots i.gol{background:var(--ouro);border-color:var(--ouro)}
+.dots i.agora{border-color:var(--ouro);transform:scale(1.2)}
+.contagem{font-family:var(--f-display);font-size:1.4rem;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+.campo-gol{height:110px;display:flex;align-items:flex-end;gap:8px}
+#j-avatar{width:84px;flex-shrink:0}
+.campo-gol .avatar{width:84px;transform-origin:bottom center}
+.campo-gol .avatar.comemora{animation:pula .5s ease-out 2}
+@keyframes pula{40%{transform:translateY(-18px) rotate(-6deg)}}
+.gol-alvo{position:relative;flex:1;height:100%;display:flex;justify-content:center;align-items:flex-end}
+.trave{
+  position:relative;width:100%;max-width:300px;height:78px;border:6px solid var(--cal);border-bottom:0;border-radius:6px 6px 0 0;
+  background:repeating-linear-gradient(90deg,transparent 0 11px,rgba(243,246,239,.18) 11px 12px),repeating-linear-gradient(0deg,transparent 0 11px,rgba(243,246,239,.18) 11px 12px);
+}
+.bola{position:absolute;left:50%;bottom:0;font-size:34px;transform:translateX(-50%);transition:transform .45s cubic-bezier(.2,.8,.3,1)}
+.bola.chute{transform:translate(-50%,-62px) scale(.65) rotate(540deg)}
+.gooool{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--f-display);font-size:2.6rem;color:var(--ouro);text-shadow:0 3px 0 var(--preto);opacity:0;transform:scale(.6);transition:all .3s;pointer-events:none}
+.gooool.on{opacity:1;transform:scale(1)}
+
+.pergunta{display:flex;align-items:center;gap:10px;justify-content:space-between}
+.pergunta p{font-size:1.25rem;font-weight:700;min-width:0}
+.mini{display:flex;gap:8px;flex-shrink:0}
+.mini button{width:52px;height:52px;border-radius:50%;border:2px solid var(--linha);background:var(--painel);font-size:1.5rem;cursor:pointer;color:var(--cal)}
+
+.visual{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;min-height:150px;background:var(--painel);border:2px solid var(--linha);border-radius:22px;padding:16px;text-align:center}
+.emoji-grande{font-size:clamp(72px,24vw,120px);line-height:1}
+.palavra-grande{font-size:clamp(2.4rem,12vw,3.6rem);font-weight:700;letter-spacing:3px;word-break:break-word}
+.frase{font-size:clamp(1.5rem,6.5vw,2rem);font-weight:700;line-height:1.6;display:flex;flex-wrap:wrap;gap:4px 10px;justify-content:center}
+.palavra{font:inherit;color:var(--cal);background:none;border:0;border-bottom:3px dotted var(--linha);padding:0 2px;cursor:pointer}
+.palavra.falando{color:var(--ouro);border-bottom-color:var(--ouro)}
+.ouvir-grande{width:120px;height:120px;border-radius:50%;border:4px solid var(--ouro);background:rgba(244,197,66,.12);font-size:3.2rem;cursor:pointer;color:var(--cal)}
+.dica-box{font-size:1.1rem;color:var(--suave)}
+.dica-box b{color:var(--cal);font-size:2.4rem;vertical-align:middle}
+
+.opcoes{display:grid;gap:12px}
+.opcoes.c2{grid-template-columns:repeat(2,1fr)}
+.opcoes.c3{grid-template-columns:repeat(3,1fr)}
+.op{
+  font-family:var(--f-ler);font-weight:700;font-size:1.5rem;color:var(--preto);background:var(--cal);border:0;border-radius:18px;
+  min-height:72px;padding:12px;cursor:pointer;box-shadow:0 6px 0 #9aa79c;touch-action:manipulation;letter-spacing:1px;word-break:break-word
+}
+.op.letra{font-size:3rem;min-height:100px}
+.op.emo{font-size:3.2rem;min-height:100px}
+.op:active{transform:translateY(4px);box-shadow:0 2px 0 #9aa79c}
+.op.certo{background:var(--certo);box-shadow:0 6px 0 #4f9e54}
+.op.errado{background:#4b5a50;color:#a9b5ad;box-shadow:none;animation:balanca .35s}
+.op.mostrar{outline:4px dashed var(--ouro);outline-offset:3px;animation:pulsa 1s infinite}
+
+.casas{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.casa{min-width:64px;height:64px;border-radius:14px;border:3px dashed var(--linha);display:flex;align-items:center;justify-content:center;font-size:1.6rem;font-weight:700;padding:0 8px}
+.casa.cheia{border-style:solid;border-color:var(--certo);background:rgba(139,227,143,.15)}
+.pecas{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.peca{font-family:var(--f-ler);font-weight:700;font-size:1.7rem;min-width:84px;min-height:68px;border:0;border-radius:16px;background:var(--cal);color:var(--preto);box-shadow:0 6px 0 #9aa79c;cursor:pointer;padding:8px 14px}
+.peca:disabled{opacity:.2;box-shadow:none}
+.peca.errado{animation:balanca .35s}
+.peca.mostrar{outline:4px dashed var(--ouro);outline-offset:3px;animation:pulsa 1s infinite}
+
+.feedback{min-height:1.6em;text-align:center;font-family:var(--f-display);font-size:1.35rem;letter-spacing:.5px}
+.feedback.bom{color:var(--certo)}
+.feedback.quase{color:var(--quase)}
+
+@keyframes balanca{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+@keyframes pulsa{50%{outline-color:transparent}}
+
+/* Carreira */
+.escada{display:flex;flex-direction:column;gap:10px}
+.degrau{display:grid;grid-template-columns:48px 1fr auto;align-items:center;gap:12px;text-align:left;font:inherit;color:var(--cal);background:var(--painel);border:2px solid var(--linha);border-radius:16px;padding:12px;cursor:pointer}
+.degrau[disabled]{opacity:.45;cursor:default}
+.degrau.atual{border-color:var(--ouro)}
+.degrau .ic{font-size:1.8rem;text-align:center}
+.degrau h3{font-size:1.3rem}
+.degrau small{color:var(--suave);font-size:.95rem}
+.degrau .num{font-family:var(--f-display);font-variant-numeric:tabular-nums}
+
+/* Ajustes */
+.campo{display:flex;flex-direction:column;gap:6px}
+.campo input{font:inherit;font-size:1.4rem;font-weight:700;padding:12px 14px;border-radius:14px;border:2px solid var(--linha);background:rgba(0,0,0,.35);color:var(--cal);text-transform:uppercase}
+.escolhas{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.escolha{font-family:var(--f-display);font-size:1.1rem;padding:14px 10px;border-radius:14px;border:3px solid var(--linha);background:rgba(0,0,0,.3);color:var(--cal);cursor:pointer;min-height:56px}
+.escolha[aria-pressed="true"]{border-color:var(--ouro);background:rgba(244,197,66,.18)}
+.chave{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--linha);font-size:1.05rem}
+.chave:last-child{border-bottom:0}
+.chave button{flex-shrink:0;min-width:78px;font-family:var(--f-display);font-size:1rem;border-radius:999px;padding:8px 14px;border:2px solid var(--linha);background:rgba(0,0,0,.3);color:var(--suave);cursor:pointer}
+.chave button[aria-pressed="true"]{background:var(--certo);color:var(--preto);border-color:var(--certo)}
+.chave small{display:block;color:var(--suave);font-size:.85rem}
+
+.resultado{align-items:center;text-align:center;justify-content:center}
+.numero-gols{font-family:var(--f-display);font-size:5.5rem;line-height:1;color:var(--ouro)}
+.trofeu{font-size:110px;line-height:1;animation:sobe .8s ease-out}
+@keyframes sobe{from{transform:translateY(30px) scale(.7);opacity:0}}
+
+.confete{position:fixed;top:-20px;width:10px;height:16px;z-index:50;pointer-events:none;animation:cai linear forwards}
+@keyframes cai{to{transform:translateY(110vh) rotate(720deg)}}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+</head>
+<body>
+<div class="app">
+
+  <!-- Boas-vindas (primeira vez) -->
+  <section class="tela" id="boasvindas" hidden>
+    <div class="rotulo">Peneira</div>
+    <h1>Bem-vindo ao time!</h1>
+    <p>Aqui você vira craque da leitura. Cada acerto é um gol. Com gols você sobe de categoria, da Escolinha até a Seleção.</p>
+    <div class="painel">
+      <label class="campo" for="bv-nome"><span class="rotulo">Nome na camisa</span>
+        <input id="bv-nome" maxlength="12" autocomplete="off" value="DAVI"></label>
+      <span class="rotulo">Seu ídolo</span>
+      <div class="escolhas" id="bv-idolo"></div>
+      <span class="rotulo">Seu time</span>
+      <div class="escolhas" id="bv-time"></div>
+    </div>
+    <button class="btn btn-ouro btn-grande" id="bv-ok">Entrar em campo</button>
+  </section>
+
+  <!-- Vestiário (início) -->
+  <section class="tela" id="home" hidden>
+    <div class="cartao" id="cartao"></div>
+    <div class="painel">
+      <div class="rotulo" id="h-meta"></div>
+      <div class="barra"><i id="h-barra"></i></div>
+    </div>
+    <button class="btn btn-ouro btn-grande" id="h-jogar">⚽ Jogar partida</button>
+    <button class="btn" id="h-jogador">Meu jogador</button>
+    <div class="linha-btns">
+      <button class="btn" id="h-carreira">Carreira</button>
+      <button class="btn" id="h-ajustes">Ajustes</button>
+    </div>
+    <p class="rotulo" style="text-align:center">Cada partida tem 5 lances</p>
+  </section>
+
+  <!-- Partida -->
+  <section class="tela" id="jogo" hidden>
+    <div class="placar">
+      <button class="btn btn-fantasma" id="j-sair" aria-label="Sair da partida">✕ Sair</button>
+      <div class="dots" id="j-dots"></div>
+      <div class="contagem" id="j-gols">⚽ 0</div>
+    </div>
+    <div class="campo-gol">
+      <div id="j-avatar"></div>
+      <div class="gol-alvo">
+        <div class="trave"></div>
+        <span class="bola" id="j-bola">⚽</span>
+        <div class="gooool" id="j-goool">GOOOL!</div>
+      </div>
+    </div>
+    <div class="pergunta">
+      <p id="j-pergunta"></p>
+      <div class="mini">
+        <button id="j-ouvir" aria-label="Ouvir de novo">🔊</button>
+        <button id="j-dica" aria-label="Pedir dica">💡</button>
+      </div>
+    </div>
+    <div class="visual" id="j-visual"></div>
+    <div id="j-area"></div>
+    <div class="feedback" id="j-feedback" aria-live="polite"></div>
+    <button class="btn btn-ouro btn-grande" id="j-proximo" hidden>Próximo lance ▶</button>
+  </section>
+
+  <!-- Fim de jogo -->
+  <section class="tela resultado" id="fim" hidden>
+    <div class="rotulo">Fim de jogo</div>
+    <div class="numero-gols" id="f-gols">0</div>
+    <h2 id="f-titulo"></h2>
+    <p id="f-texto"></p>
+    <div class="painel" style="width:100%">
+      <div class="rotulo" id="f-meta"></div>
+      <div class="barra"><i id="f-barra"></i></div>
+    </div>
+    <div class="linha-btns" style="width:100%">
+      <button class="btn" id="f-voltar">Vestiário</button>
+      <button class="btn btn-ouro" id="f-denovo">Jogar de novo</button>
+    </div>
+  </section>
+
+  <!-- Subiu de categoria -->
+  <section class="tela resultado" id="promo" hidden>
+    <div class="trofeu" id="p-icone">🏆</div>
+    <div class="rotulo">Você foi promovido</div>
+    <h1 id="p-titulo"></h1>
+    <p id="p-texto"></p>
+    <button class="btn btn-ouro btn-grande" id="p-ok" style="width:100%">Continuar</button>
+  </section>
+
+  <!-- Carreira -->
+  <section class="tela" id="carreira" hidden>
+    <div class="placar"><h2>Carreira</h2><button class="btn btn-fantasma" id="c-voltar">Voltar</button></div>
+    <p>Toque numa categoria liberada para treinar nela.</p>
+    <div class="escada" id="c-lista"></div>
+  </section>
+
+  <!-- Meu jogador -->
+  <section class="tela" id="jogador" hidden>
+    <div class="placar"><h2>Meu jogador</h2><button class="btn btn-fantasma" id="m-voltar">Pronto</button></div>
+    <div class="vitrine" id="m-vitrine"></div>
+    <div class="painel" id="m-opcoes"></div>
+  </section>
+
+  <!-- Ajustes -->
+  <section class="tela" id="ajustes" hidden>
+    <div class="placar"><h2>Ajustes</h2><button class="btn btn-fantasma" id="a-voltar">Pronto</button></div>
+    <div class="painel">
+      <label class="campo" for="a-nome"><span class="rotulo">Nome na camisa</span>
+        <input id="a-nome" maxlength="12" autocomplete="off"></label>
+      <span class="rotulo">Ídolo</span>
+      <div class="escolhas" id="a-idolo"></div>
+      <span class="rotulo">Time</span>
+      <div class="escolhas" id="a-time"></div>
+    </div>
+    <div class="painel">
+      <span class="rotulo">Dificuldade</span>
+      <div class="escolhas" id="a-dif"></div>
+      <small style="color:var(--suave)">Na automática, o jogo dá mais opções quando ele acerta muito e menos quando erra muito.</small>
+    </div>
+    <div class="painel" id="a-chaves"></div>
+    <div class="painel">
+      <button class="btn btn-fantasma" id="a-zerar">Zerar carreira</button>
+      <div id="a-confirma" hidden>
+        <p style="margin-bottom:10px">Apagar todos os gols e voltar para a Escolinha?</p>
+        <div class="linha-btns">
+          <button class="btn" id="a-nao">Cancelar</button>
+          <button class="btn btn-ouro" id="a-sim">Sim, zerar</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+// ---------- Conteúdo ----------
+const LETRAS = [ // letra, nome falado, palavra exemplo, figura
+  ['A','á','AVIÃO','✈️'],['B','bê','BOLA','⚽'],['C','cê','CASA','🏠'],['D','dê','DADO','🎲'],['E','é','ESTRELA','⭐'],
+  ['F','éfe','FOGUETE','🚀'],['G','gê','GATO','🐱'],['I','i','ILHA','🏝️'],['J','jota','JACARÉ','🐊'],['L','éle','LUA','🌙'],
+  ['M','ême','MACACO','🐒'],['N','êne','NAVIO','🚢'],['O','ó','OVO','🥚'],['P','pê','PATO','🦆'],['R','érre','REDE','🥅'],
+  ['S','ésse','SAPO','🐸'],['T','tê','TOMATE','🍅'],['U','u','UVA','🍇'],['V','vê','VACA','🐄'],['Z','zê','ZEBRA','🦓']
+];
+const CONSOANTES = ['B','D','F','L','M','N','P','S','T','V'];
+const VOGAIS = ['A','E','I','O','U'];
+const SOM_VOGAL = {A:'á',E:'ê',I:'í',O:'ô',U:'ú'};
+
+const PAL1 = [ // palavras simples: palavra, sílabas, figura
+  ['BOLA','BO-LA','⚽'],['LUVA','LU-VA','🧤'],['REDE','RE-DE','🥅'],['PATO','PA-TO','🦆'],['GATO','GA-TO','🐱'],
+  ['DADO','DA-DO','🎲'],['CASA','CA-SA','🏠'],['SAPO','SA-PO','🐸'],['MALA','MA-LA','🧳'],['BOLO','BO-LO','🎂'],
+  ['MOTO','MO-TO','🏍️'],['VACA','VA-CA','🐄'],['PIPA','PI-PA','🪁'],['CAMISA','CA-MI-SA','👕'],['TOMATE','TO-MA-TE','🍅'],
+  ['BANANA','BA-NA-NA','🍌'],['CAVALO','CA-VA-LO','🐴'],['MACACO','MA-CA-CO','🐒'],['GALO','GA-LO','🐓'],['TAÇA','TA-ÇA','🏆'],
+  ['LUA','LU-A','🌙'],['UVA','U-VA','🍇'],['OVO','O-VO','🥚'],['SAPATO','SA-PA-TO','👞'],['PIPOCA','PI-PO-CA','🍿'],
+  ['MENINO','ME-NI-NO','👦'],['FOCA','FO-CA','🦭'],['DEDO','DE-DO','☝️'],
+  ['CAFÉ','CA-FÉ','☕'],['PERU','PE-RU','🦃'],['MAPA','MA-PA','🗺️'],['NAVIO','NA-VI-O','🚢'],['SALADA','SA-LA-DA','🥗'],
+  ['BONÉ','BO-NÉ','🧢'],['GELO','GE-LO','🧊'],['MOEDA','MO-E-DA','🪙'],['COMETA','CO-ME-TA','☄️'],['PEPINO','PE-PI-NO','🥒'],
+  ['JACARÉ','JA-CA-RÉ','🐊'],['FADA','FA-DA','🧚'],['SINO','SI-NO','🔔'],['RATO','RA-TO','🐭'],['MAÇÃ','MA-ÇÃ','🍎'],
+  ['VELA','VE-LA','🕯️'],['ROBÔ','RO-BÔ','🤖']
+];
+const PAL2 = [ // palavras difíceis
+  ['CHUTEIRA','CHU-TEI-RA','👟'],['BANDEIRA','BAN-DEI-RA','🚩'],['ESTRELA','ES-TRE-LA','⭐'],['CARTÃO','CAR-TÃO','🟨'],
+  ['MEDALHA','ME-DA-LHA','🥇'],['TORCIDA','TOR-CI-DA','📣'],['ESTÁDIO','ES-TÁ-DIO','🏟️'],['FOGUETE','FO-GUE-TE','🚀'],
+  ['CORAÇÃO','CO-RA-ÇÃO','❤️'],['VIDEOGAME','VI-DE-O-GA-ME','🎮'],['GOLEIRO','GO-LEI-RO','🧤'],['TROFÉU','TRO-FÉU','🏆'],
+  ['CHUVA','CHU-VA','🌧️'],['CACHORRO','CA-CHOR-RO','🐶'],['PALHAÇO','PA-LHA-ÇO','🤡'],['GIRAFA','GI-RA-FA','🦒'],
+  ['TELEFONE','TE-LE-FO-NE','📱'],['ÔNIBUS','Ô-NI-BUS','🚌'],['PRESENTE','PRE-SEN-TE','🎁'],['SORVETE','SOR-VE-TE','🍦'],
+  ['DINOSSAURO','DI-NOS-SAU-RO','🦖'],['TUBARÃO','TU-BA-RÃO','🦈'],['BICICLETA','BI-CI-CLE-TA','🚲'],['CHAPÉU','CHA-PÉU','🎩'],
+  ['FUTEBOL','FU-TE-BOL','⚽'],['CHOCOLATE','CHO-CO-LA-TE','🍫'],['BORBOLETA','BOR-BO-LE-TA','🦋'],['ELEFANTE','E-LE-FAN-TE','🐘'],
+  ['TARTARUGA','TAR-TA-RU-GA','🐢'],['MORANGO','MO-RAN-GO','🍓'],['ABACAXI','A-BA-CA-XI','🍍'],['COELHO','CO-E-LHO','🐰'],
+  ['GUITARRA','GUI-TAR-RA','🎸'],['HAMBÚRGUER','HAM-BÚR-GUER','🍔'],['PINGUIM','PIN-GUIM','🐧'],['COMPUTADOR','COM-PU-TA-DOR','💻'],
+  ['MOCHILA','MO-CHI-LA','🎒'],['TROVÃO','TRO-VÃO','⛈️']
+];
+const FRASE1 = [ // frase, pergunta, opções (a primeira é a certa)
+  ['O GATO CHUTOU A BOLA.','Quem chutou a bola?',['🐱 GATO','🐸 SAPO','🐒 MACACO']],
+  ['DAVI FEZ UM GOL.','Quem fez o gol?',['DAVI','O GOLEIRO','O JUIZ']],
+  ['O GOLEIRO PEGOU A BOLA COM A LUVA.','O goleiro pegou a bola com o quê?',['🧤 LUVA','👟 CHUTEIRA','👕 CAMISA']],
+  ['O JUIZ MOSTROU O CARTÃO AMARELO.','Qual cartão o juiz mostrou?',['🟨 AMARELO','🟥 VERMELHO','🟩 VERDE']],
+  ['A TORCIDA CANTOU NO ESTÁDIO.','Onde a torcida cantou?',['🏟️ NO ESTÁDIO','🏠 EM CASA','🏫 NA ESCOLA']],
+  ['O TIME GANHOU A TAÇA.','O que o time ganhou?',['🏆 A TAÇA','🎂 UM BOLO','🪁 UMA PIPA']],
+  ['A BOLA BATEU NA TRAVE.','Onde a bola bateu?',['NA TRAVE','NA REDE','NO JUIZ']],
+  ['DAVI JOGA VIDEOGAME DEPOIS DO TREINO.','O que Davi joga depois do treino?',['🎮 VIDEOGAME','🎲 DADO','🪁 PIPA']],
+  ['O CAMISA DEZ BATEU O PÊNALTI.','Quem bateu o pênalti?',['O CAMISA DEZ','O GOLEIRO','O JUIZ']],
+  ['CHOVEU MUITO NO JOGO DE ONTEM.','Como estava o tempo no jogo?',['🌧️ CHUVA','☀️ SOL','❄️ NEVE']],
+  ['O CACHORRO CORREU ATRÁS DA BOLA.','Quem correu atrás da bola?',['🐶 CACHORRO','🐱 GATO','🐴 CAVALO']],
+  ['DAVI TOMOU SORVETE DEPOIS DO JOGO.','O que Davi tomou?',['🍦 SORVETE','🍅 SUCO DE TOMATE','🥛 LEITE']],
+  ['O SAPO PULOU NA LAGOA.','Quem pulou na lagoa?',['🐸 O SAPO','🐶 O CACHORRO','🐴 O CAVALO']],
+  ['A BOLA É REDONDA E BRANCA.','Qual é a cor da bola?',['BRANCA','VERDE','AZUL']],
+  ['DAVI CALÇOU A CHUTEIRA NOVA.','O que Davi calçou?',['👟 A CHUTEIRA','🧤 A LUVA','🧢 O BONÉ']],
+  ['O TREINO COMEÇA DE MANHÃ.','Quando começa o treino?',['DE MANHÃ','DE NOITE','DE MADRUGADA']],
+  ['O JUIZ APITOU O FIM DO JOGO.','Quem apitou?',['O JUIZ','O GOLEIRO','A TORCIDA']],
+  ['O MACACO COMEU UMA BANANA.','O que o macaco comeu?',['🍌 BANANA','🍎 MAÇÃ','🍿 PIPOCA']],
+  ['A TORCIDA LEVOU UMA BANDEIRA GRANDE.','O que a torcida levou?',['🚩 BANDEIRA','🎈 BALÃO','🔔 SINO']],
+  ['DAVI BEBEU ÁGUA NO INTERVALO.','O que Davi bebeu?',['💧 ÁGUA','🥤 REFRIGERANTE','☕ CAFÉ']]
+];
+const FRASE2 = [
+  ['MESSI DRIBLOU DOIS ZAGUEIROS E FEZ O GOL.','Quantos zagueiros Messi driblou?',['DOIS','TRÊS','UM']],
+  ['CRISTIANO RONALDO PULOU BEM ALTO E CABECEOU PARA O GOL.','Como Cristiano fez o gol?',['DE CABEÇA','DE PÉ ESQUERDO','DE CALCANHAR']],
+  ['NEYMAR DEU UM CHAPÉU NO ZAGUEIRO E A TORCIDA GRITOU.','Quem gritou?',['A TORCIDA','O TÉCNICO','O GOLEIRO']],
+  ['VINÍCIUS JÚNIOR CORREU PELA ESQUERDA E CRUZOU A BOLA.','Por qual lado Vinícius correu?',['ESQUERDA','DIREITA','PELO MEIO']],
+  ['O CORINTHIANS E O ABC JOGAM DE PRETO E BRANCO.','Quais são as cores dos dois times?',['PRETO E BRANCO','AZUL E BRANCO','VERDE E AMARELO']],
+  ['O JOGO TERMINOU DOIS A ZERO PARA O TIMÃO.','Quem ganhou o jogo?',['O TIMÃO','O ADVERSÁRIO','NINGUÉM, EMPATOU']],
+  ['DEPOIS DO GOL, DAVI COMEMOROU COM O TIME.','Com quem Davi comemorou?',['COM O TIME','SOZINHO','COM O JUIZ']],
+  ['O TÉCNICO PEDIU PARA O TIME TOCAR A BOLA COM CALMA.','O que o técnico pediu?',['TOCAR A BOLA','PARAR O JOGO','CHUTAR DE LONGE']],
+  ['O ABC FEZ UM GOL NO ÚLTIMO MINUTO E A FESTA FOI GRANDE.','Quando saiu o gol do ABC?',['NO ÚLTIMO MINUTO','NO COMEÇO','NO INTERVALO']],
+  ['O GOLEIRO DEFENDEU O PÊNALTI E SALVOU O TIME.','O que o goleiro fez?',['DEFENDEU','CHUTOU','CAIU']],
+  ['DAVI TREINA TODO DIA PARA SER UM CRAQUE.','Para que Davi treina?',['PARA SER CRAQUE','PARA DORMIR','PARA COMER']],
+  ['NA SELEÇÃO, O CAMISA DEZ USA A CHUTEIRA AMARELA.','Qual é a cor da chuteira?',['AMARELA','AZUL','PRETA']],
+  ['O ATACANTE CHUTOU FORTE E A BOLA ENTROU NO ÂNGULO.','Onde a bola entrou?',['NO ÂNGULO','NA ARQUIBANCADA','NA TRAVE']],
+  ['NO SEGUNDO TEMPO, O TIME VIROU O JOGO PARA TRÊS A DOIS.','Qual foi o placar final?',['TRÊS A DOIS','DOIS A ZERO','UM A UM']],
+  ['DEPOIS DO TREINO, DAVI JOGOU VIDEOGAME COM OS AMIGOS.','Com quem Davi jogou videogame?',['COM OS AMIGOS','COM O JUIZ','SOZINHO']],
+  ['O GOLEIRO USA LUVAS PARA PROTEGER AS MÃOS.','Para que servem as luvas?',['PROTEGER AS MÃOS','CHUTAR A BOLA','CORRER MAIS']],
+  ['MESSI E NEYMAR JOGARAM JUNTOS NO MESMO TIME.','Quem jogou junto com Messi?',['NEYMAR','O GOLEIRO','O JUIZ']],
+  ['QUANDO O JOGADOR FAZ FALTA, O JUIZ PODE DAR CARTÃO.','O que o juiz pode dar?',['CARTÃO','BOLA','PRESENTE']],
+  ['O ESTÁDIO ESTAVA LOTADO E A TORCIDA CANTOU O JOGO INTEIRO.','Como estava o estádio?',['LOTADO','VAZIO','FECHADO']],
+  ['VINÍCIUS JÚNIOR FEZ UMA DANCINHA PARA COMEMORAR O GOL.','O que Vinícius fez para comemorar?',['UMA DANCINHA','UM CHUTE','UMA FALTA']]
+];
+const CATS = [
+  {nome:'Escolinha',   desc:'Conhecer as letras',       tipos:['letra'],             meta:10},
+  {nome:'Sub-11',      desc:'Sílabas: BA, BE, BI, BO, BU', tipos:['silaba'],         meta:12},
+  {nome:'Sub-13',      desc:'Primeiras palavras',       tipos:['figura1'],           meta:12},
+  {nome:'Sub-15',      desc:'Montar palavras',          tipos:['montar1','figura1'], meta:12},
+  {nome:'Sub-17',      desc:'Ler sem ajuda',            tipos:['ler1','figura2'],    meta:12},
+  {nome:'Sub-20',      desc:'Palavras difíceis',        tipos:['montar2','ler2'],    meta:12},
+  {nome:'Profissional',desc:'Ler frases',               tipos:['frase1'],            meta:15},
+  {nome:'Seleção',     desc:'Frases de craque',         tipos:['frase2','frase1'],   meta:15}
+];
+const IDOLOS = {
+  'Neymar':['Golaço com drible de Neymar!','Que chapéu! Estilo Neymar!'],
+  'Cristiano Ronaldo':['SIUUU! Comemorou igual ao Cristiano!','Pulo de Cristiano Ronaldo!'],
+  'Messi':['Gol de craque, estilo Messi!','Driblou todo mundo igual ao Messi!'],
+  'Vinícius Júnior':['Dancinha do Vini na comemoração!','Arrancada de Vinícius Júnior!']
+};
+const TIMES = {'Corinthians':{camisa:'#f3f6ef',detalhe:'#0a0d0b',grito:'Vai, Corinthians!'},
+               'ABC':{camisa:'#0a0d0b',detalhe:'#f3f6ef',grito:'Vai, ABC!'}};
+const GRITOS = ['GOOOL!','Golaço!','Que chute!','Na gaveta!','Gol de placa!'];
+const NOMES = new Set(['DAVI','MESSI','NEYMAR','CRISTIANO','RONALDO','VINÍCIUS','JÚNIOR','CORINTHIANS','TIMÃO','SELEÇÃO']);
+const SKILL = {letra:'LET',silaba:'SIL',figura1:'PAL',figura2:'PAL',ler1:'PAL',ler2:'PAL',montar1:'PAL',montar2:'PAL',frase1:'FRA',frase2:'FRA'};
+
+// ---------- Estado salvo ----------
+const KEY = 'carreira-davi-v1';
+function padrao(){ return {novo:true,nome:'DAVI',idolo:'Neymar',time:'Corinthians',cat:0,total:0,
+  gols:CATS.map(()=>0),ritmo:CATS.map(()=>[]),stats:{LET:0,SIL:0,PAL:0,FRA:0},
+  avatar:{pele:3,cabelo:'curto',corCabelo:0,olhos:0,oculos:false},
+  cfg:{voz:true,lento:false,minus:false,calmo:false,dif:'auto'}}; }
+function carregar(){
+  const p = padrao();
+  try{ const r = localStorage.getItem(KEY); if(r){ const d = JSON.parse(r);
+    return Object.assign(p,d,{cfg:Object.assign(p.cfg,d.cfg||{}),stats:Object.assign(p.stats,d.stats||{}),
+      avatar:Object.assign(p.avatar,d.avatar||{}),
+      gols:CATS.map((_,i)=>(d.gols&&d.gols[i])||0),ritmo:CATS.map((_,i)=>(d.ritmo&&d.ritmo[i])||[])}); } }catch(e){}
+  return p;
+}
+
+// Dificuldade: número de opções por lance (2 = fácil, 3 = normal, 4 = difícil)
+function nOps(ci){
+  const d = S.cfg.dif;
+  if(d==='facil') return 2; if(d==='normal') return 3; if(d==='dificil') return 4;
+  const r = S.ritmo[ci].slice(-8);
+  if(r.length<5) return 3;
+  const taxa = r.reduce((a,b)=>a+b,0)/r.length;
+  return taxa>=.85 ? 4 : taxa<=.5 ? 2 : 3;
+}
+function salvar(){ try{ localStorage.setItem(KEY,JSON.stringify(S)); }catch(e){} }
+let S = carregar();
+
+// ---------- Utilidades ----------
+const $ = s => document.querySelector(s);
+const rand = n => Math.floor(Math.random()*n);
+const pick = a => a[rand(a.length)];
+const embaralhar = a => { a=a.slice(); for(let i=a.length-1;i>0;i--){const j=rand(i+1);[a[i],a[j]]=[a[j],a[i]];} return a; };
+const amostra = (a,n) => embaralhar(a).slice(0,n);
+const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function mostrar(id){ document.querySelectorAll('.tela').forEach(t=>t.hidden = t.id!==id); window.scrollTo(0,0); }
+
+// Letra de forma (maiúscula) ou minúscula, mantendo nomes próprios com inicial maiúscula
+function fmt(s){
+  if(!S.cfg.minus) return s;
+  const out = s.split(' ').map(tok=>{
+    const bare = tok.replace(/[.,!?]/g,'');
+    if(bare==='ABC') return tok;
+    if(NOMES.has(bare) || bare===S.nome) return tok.charAt(0)+tok.slice(1).toLowerCase();
+    return tok.toLowerCase();
+  }).join(' ');
+  return s.includes(' ') && /[.!?]$/.test(s) ? out.charAt(0).toUpperCase()+out.slice(1) : out;
+}
+
+// ---------- Voz ----------
+const temVoz = 'speechSynthesis' in window;
+const vozAtiva = () => temVoz && S.cfg.voz;
+function falar(t,fila){
+  if(!vozAtiva() || !t) return;
+  try{
+    if(!fila) speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(t);
+    u.lang = 'pt-BR';
+    const vs = speechSynthesis.getVoices();
+    const v = vs.find(v=>/pt[-_]BR/i.test(v.lang)) || vs.find(v=>/^pt/i.test(v.lang));
+    if(v) u.voice = v;
+    u.rate = S.cfg.lento ? 0.7 : 0.9;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+if(temVoz){ try{ speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = ()=>{}; }catch(e){} }
+const falaSilaba = s => s.length===2 && SOM_VOGAL[s[1]] ? s[0].toLowerCase()+SOM_VOGAL[s[1]] : s.toLowerCase();
+
+// ---------- Sons (sintetizados, sem arquivos) ----------
+let ac = null;
+function audio(){ if(!ac){ try{ ac = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return null; } }
+  if(ac.state==='suspended') ac.resume(); return ac; }
+function tom(freq,dur,tipo,vol,fim){ const c=audio(); if(!c) return; const o=c.createOscillator(), g=c.createGain();
+  o.type=tipo||'sine'; o.frequency.setValueAtTime(freq,c.currentTime); if(fim) o.frequency.exponentialRampToValueAtTime(fim,c.currentTime+dur);
+  g.gain.setValueAtTime((vol||.2)*(S.cfg.calmo?.4:1),c.currentTime); g.gain.exponentialRampToValueAtTime(.001,c.currentTime+dur);
+  o.connect(g).connect(c.destination); o.start(); o.stop(c.currentTime+dur); }
+function ruido(dur,freq,vol,subida){ const c=audio(); if(!c) return; const n=c.sampleRate*dur, b=c.createBuffer(1,n,c.sampleRate), d=b.getChannelData(0);
+  for(let i=0;i<n;i++) d[i]=Math.random()*2-1; const s=c.createBufferSource(); s.buffer=b;
+  const f=c.createBiquadFilter(); f.type='bandpass'; f.frequency.value=freq; const g=c.createGain(); const t=c.currentTime, v=vol*(S.cfg.calmo?.3:1);
+  g.gain.setValueAtTime(.001,t); g.gain.linearRampToValueAtTime(v,t+(subida||.01)); g.gain.linearRampToValueAtTime(.001,t+dur);
+  s.connect(f).connect(g).connect(c.destination); s.start(); }
+const som = {
+  apito(){ tom(2300,.18,'sine',.12); setTimeout(()=>tom(2300,.35,'sine',.12),230); },
+  chute(){ ruido(.12,300,.5); },
+  torcida(){ if(S.cfg.calmo){ tom(880,.3,'sine',.15,1320); return; } ruido(1.6,900,.35,.35); tom(660,.25,'triangle',.08,990); },
+  trave(){ tom(200,.25,'triangle',.18,150); },
+  encaixe(){ tom(700,.12,'sine',.12,1000); },
+  festa(){ [523,659,784,1046].forEach((f,i)=>setTimeout(()=>tom(f,.25,'triangle',.12),i*140)); }
+};
+
+function confete(){
+  if(S.cfg.calmo || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const cores=['#f4c542','#f3f6ef','#0a0d0b','#8be38f'];
+  for(let i=0;i<40;i++){ const d=document.createElement('i'); d.className='confete';
+    d.style.left=Math.random()*100+'vw'; d.style.background=pick(cores); d.style.animationDuration=(1.6+Math.random()*1.4)+'s';
+    d.style.animationDelay=Math.random()*.4+'s'; document.body.appendChild(d); setTimeout(()=>d.remove(),3500); }
+}
+
+// ---------- Vestiário ----------
+const ovr = () => Math.min(99,50+Math.floor(S.total/3));
+const statVal = k => Math.min(99,40+S.stats[k]*2);
+const fimCarreira = () => S.cat>=CATS.length;
+// ---------- Personagem (cabeção estilo caricatura) ----------
+const PELES = ['#f6d7c3','#eec1a0','#d9a47c','#b97f57','#8d5a3b','#5e3a26'];
+const CORES_CABELO = [['Preto','#1d1612'],['Castanho escuro','#3e2618'],['Castanho','#7a4b25'],['Loiro','#d9a441'],['Ruivo','#a8432a']];
+const CORES_OLHOS = [['Castanhos','#5a3a1e'],['Pretos','#1e1410'],['Verdes','#3f7a3a'],['Azuis','#3b6fb0']];
+const ESTILOS = [['raspado','Raspado'],['curto','Curto'],['topete','Topete'],['moicano','Moicano'],['cacheado','Cacheado'],['blackpower','Black power'],['franja','Franja']];
+function tom2(hex,f){ const n=parseInt(hex.slice(1),16); const c=[n>>16,(n>>8)&255,n&255].map(v=>Math.max(0,Math.min(255,Math.round(v*f))));
+  return '#'+c.map(v=>v.toString(16).padStart(2,'0')).join(''); }
+function avatarSVG(a){
+  a = a || S.avatar;
+  const t = TIMES[S.time]||TIMES.Corinthians, pele = PELES[a.pele]||PELES[3], pele2 = tom2(pele,.82);
+  const cab = (CORES_CABELO[a.corCabelo]||CORES_CABELO[0])[1], olho = (CORES_OLHOS[a.olhos]||CORES_OLHOS[0])[1];
+  const cachos = (r,ry) => { let s=''; for(let i=0;i<=9;i++){ const ang=Math.PI*(1.05+i*0.09); s+=`<circle cx="${100+56*Math.cos(ang)}" cy="${86+ry*Math.sin(ang)}" r="${r}" fill="${cab}"/>`; } return s; };
+  const capa = (op) => `<path d="M46 92 Q46 34 100 32 Q154 34 154 92 Q146 60 100 56 Q54 60 46 92Z" fill="${cab}" opacity="${op}"/>`;
+  let atras='', frente='';
+  switch(a.cabelo){
+    case 'raspado': frente = capa(.45); break;
+    case 'curto': frente = capa(1); break;
+    case 'topete': frente = capa(1)+`<path d="M66 54 Q92 6 140 40 Q118 36 104 52 Q90 46 66 54Z" fill="${cab}"/>`; break;
+    case 'moicano': frente = capa(.35)+`<path d="M88 62 Q84 16 100 8 Q116 16 112 62Z" fill="${cab}"/>`; break;
+    case 'cacheado': frente = capa(1)+cachos(15,56); break;
+    case 'blackpower': atras = `<ellipse cx="100" cy="74" rx="76" ry="66" fill="${cab}"/>`; frente = cachos(14,52); break;
+    case 'franja': frente = `<path d="M46 90 Q48 32 100 30 Q152 32 154 90 L144 70 L128 80 L114 64 L98 80 L82 64 L68 80 Z" fill="${cab}"/>`; break;
+  }
+  const olhoSVG = x => `<ellipse cx="${x}" cy="100" rx="11" ry="12" fill="#fff"/><circle cx="${x+1}" cy="102" r="7" fill="${olho}"/><circle cx="${x+1}" cy="102" r="3.4" fill="#111"/><circle cx="${x+3.5}" cy="99" r="2" fill="#fff"/>`;
+  const oculos = a.oculos ? `<g fill="none" stroke="#1b1b1b" stroke-width="3.5"><circle cx="79" cy="101" r="16"/><circle cx="121" cy="101" r="16"/><path d="M95 99 Q100 95 105 99"/></g>` : '';
+  return `<svg class="avatar" viewBox="0 0 200 220" role="img" aria-label="Personagem de ${esc(S.nome)}">
+    ${atras}
+    <circle cx="46" cy="104" r="12" fill="${pele}"/><circle cx="154" cy="104" r="12" fill="${pele}"/>
+    <rect x="84" y="128" width="32" height="34" fill="${pele2}"/>
+    <path d="M18 220 Q22 166 72 154 L128 154 Q178 166 182 220Z" fill="${t.camisa}" stroke="${t.detalhe}" stroke-width="4"/>
+    <path d="M82 154 L100 176 L118 154" fill="none" stroke="${t.detalhe}" stroke-width="5" stroke-linejoin="round"/>
+    <text x="100" y="212" text-anchor="middle" font-family="Lilita One, sans-serif" font-size="30" fill="${t.detalhe}">10</text>
+    <ellipse cx="100" cy="96" rx="54" ry="60" fill="${pele}"/>
+    ${frente}
+    <path d="M66 82 Q78 74 90 80" stroke="${tom2(cab,1)}" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M110 80 Q122 74 134 82" stroke="${tom2(cab,1)}" stroke-width="5" fill="none" stroke-linecap="round"/>
+    ${olhoSVG(78)}${olhoSVG(120)}
+    <path d="M100 106 Q93 120 101 123" stroke="${pele2}" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <circle cx="66" cy="122" r="7" fill="#ff7a7a" opacity=".25"/><circle cx="134" cy="122" r="7" fill="#ff7a7a" opacity=".25"/>
+    <path d="M78 128 Q100 152 122 128 Z" fill="#fff" stroke="#4a1f14" stroke-width="3.5" stroke-linejoin="round"/>
+    ${oculos}
+  </svg>`;
+}
+function renderJogador(){
+  const a = S.avatar;
+  $('#m-vitrine').innerHTML = avatarSVG();
+  const cores = (lista,chave,rot) => `<span class="rotulo">${rot}</span><div class="paleta">${lista.map((c,i)=>{
+    const [nome,hex] = Array.isArray(c)?c:['Tom '+(i+1),c];
+    return `<button class="cor" data-k="${chave}" data-v="${i}" aria-label="${nome}" aria-pressed="${a[chave]===i}" style="background:${hex}"></button>`; }).join('')}</div>`;
+  $('#m-opcoes').innerHTML =
+    cores(PELES,'pele','Pele') +
+    `<span class="rotulo">Cabelo</span><div class="escolhas tres">${ESTILOS.map(([v,n])=>`<button class="escolha" data-k="cabelo" data-v="${v}" aria-pressed="${a.cabelo===v}">${n}</button>`).join('')}</div>` +
+    cores(CORES_CABELO,'corCabelo','Cor do cabelo') +
+    cores(CORES_OLHOS,'olhos','Olhos') +
+    `<span class="rotulo">Óculos</span><div class="escolhas"><button class="escolha" data-k="oculos" data-v="0" aria-pressed="${!a.oculos}">Sem óculos</button><button class="escolha" data-k="oculos" data-v="1" aria-pressed="${a.oculos}">Com óculos</button></div>`;
+  $('#m-opcoes').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+    const k=b.dataset.k, v=b.dataset.v;
+    a[k] = k==='cabelo' ? v : k==='oculos' ? v==='1' : +v;
+    salvar(); som.encaixe(); renderJogador();
+  });
+  mostrar('jogador');
+}
+function textoMeta(){
+  if(fimCarreira()) return {txt:'Você chegou à Bola de Ouro! Continue jogando no modo livre.',p:1};
+  const c=CATS[S.cat], g=Math.min(S.gols[S.cat],c.meta), falta=c.meta-g;
+  const prox = CATS[S.cat+1] ? CATS[S.cat+1].nome : 'Bola de Ouro';
+  return {txt:`${g} de ${c.meta} gols · faltam ${falta} para o ${prox}`,p:g/c.meta};
+}
+function renderHome(){
+  const cat = fimCarreira() ? '⭐ BOLA DE OURO ⭐' : CATS[S.cat].nome.toUpperCase();
+  $('#cartao').innerHTML = `
+    <div class="ovr">${ovr()}<small>ATA</small></div>
+    ${avatarSVG()}
+    <div class="cartao-nome">${esc(S.nome)}</div>
+    <div class="cartao-cat">${cat} · ídolo: ${esc(S.idolo)}</div>
+    <div class="stats">${['LET','SIL','PAL','FRA'].map(k=>`<div><b>${statVal(k)}</b><span>${k}</span></div>`).join('')}</div>`;
+  const m=textoMeta(); $('#h-meta').textContent=m.txt; $('#h-barra').style.width=(m.p*100)+'%';
+  mostrar('home');
+}
+
+// ---------- Partida ----------
+let P=null, Q=null;
+function iniciarPartida(ci){
+  const livre = ci==null;
+  if(livre) ci = fimCarreira() ? rand(CATS.length) : S.cat;
+  const lances = [];
+  for(let i=0;i<5;i++){
+    // o 3º lance revisa uma categoria anterior, para não esquecer o que já aprendeu
+    const fonte = (i===2 && ci>0) ? CATS[rand(ci)] : CATS[ci];
+    lances.push(fimCarreira()&&livre ? pick(CATS[rand(CATS.length)].tipos) : pick(fonte.tipos));
+  }
+  P = {ci,livre,lances,i:0,gols:0,res:[],usados:new Set(),n:nOps(ci)};
+  $('#j-avatar').innerHTML = avatarSVG();
+  mostrar('jogo'); som.apito(); proximoLance();
+}
+function pegarNovo(pool,chave){
+  const livres = pool.filter(x=>!P.usados.has(chave(x)));
+  const x = pick(livres.length?livres:pool); P.usados.add(chave(x)); return x;
+}
+function distratores(pool,W,n){ return amostra(pool.filter(x=>x[0]!==W[0] && x[2]!==W[2]),n); }
+
+function gerar(tipo){
+  const q = {tipo,skill:SKILL[tipo],erros:0,feito:false};
+  if(tipo==='letra'){
+    const L = pegarNovo(LETRAS,x=>x[0]);
+    q.pergunta = vozAtiva() ? 'Ouça e toque na letra certa' : `Toque na letra ${fmt(L[0])}`;
+    q.fala = `Letra ${L[1]}`; q.ouvirGrande = true;
+    q.ops = [L,...amostra(LETRAS.filter(x=>x!==L),P.n-1)].map((o,i)=>({html:esc(fmt(o[0])),ok:i===0}));
+    q.classeOp='letra';
+    q.dica = ()=>{ dicaBox(`<b>${L[3]}</b> começa com essa letra`); falar(`${q.fala}, de ${L[2].toLowerCase()}`); };
+    q.depois = {txt:`${fmt(L[0])} de ${fmt(L[2])} ${L[3]}`,fala:`${L[1]}, de ${L[2].toLowerCase()}`};
+  }
+  else if(tipo==='silaba'){
+    let c,v,s; do{ c=pick(CONSOANTES); v=pick(VOGAIS); s=c+v; }while(P.usados.has(s)); P.usados.add(s);
+    // distratores: mesma consoante (BA x BO), mesma vogal (BA x PA) e, no difícil, mais um qualquer
+    const mesmaC = VOGAIS.filter(x=>x!==v).map(x=>c+x), mesmaV = CONSOANTES.filter(x=>x!==c).map(x=>x+v);
+    const ds = [pick(mesmaC),pick(mesmaV)];
+    ds.push(pick([...mesmaC,...mesmaV].filter(x=>!ds.includes(x))));
+    q.pergunta = vozAtiva() ? 'Ouça e toque na sílaba certa' : `Toque na sílaba ${fmt(s)}`;
+    q.fala = falaSilaba(s); q.ouvirGrande = true;
+    q.ops = [s,...ds.slice(0,P.n-1)].map((o,i)=>({html:esc(fmt(o)),ok:i===0})); q.classeOp='letra';
+    const ex = PAL1.find(w=>w[1].split('-')[0]===s);
+    q.dica = ()=>{ if(ex){ dicaBox(`Como no começo de <b>${ex[2]}</b>`); falar(ex[0].toLowerCase()); } else { dicaBox(`Escute devagar`); falar(`${c.toLowerCase()}... ${q.fala}`); } };
+    q.depois = ex ? {txt:`${fmt(s)} de ${fmt(ex[0])} ${ex[2]}`,fala:`${q.fala}, de ${ex[0].toLowerCase()}`} : {txt:fmt(s),fala:q.fala};
+  }
+  else if(tipo==='figura1' || tipo==='figura2'){
+    const pool = tipo==='figura1'?PAL1:PAL2, W = pegarNovo(pool,x=>x[0]);
+    q.pergunta = 'Qual é o nome desta figura?';
+    q.fala = tipo==='figura1' ? W[0].toLowerCase() : q.pergunta;
+    q.visual = `<div class="emoji-grande" aria-hidden="true">${W[2]}</div>`;
+    q.ops = [W,...distratores(pool,W,P.n-1)].map((o,i)=>({html:esc(fmt(o[0])),ok:i===0}));
+    q.dica = ()=>{ const s1=W[1].split('-')[0]; dicaBox(`Começa com <b>${esc(fmt(s1))}</b>`); falar(falaSilaba(s1)); };
+    q.depois = {txt:`${fmt(W[0])} ${W[2]}`,fala:W[0].toLowerCase()};
+  }
+  else if(tipo==='ler1' || tipo==='ler2'){
+    const pool = tipo==='ler1'?PAL1:PAL2, W = pegarNovo(pool,x=>x[0]);
+    q.pergunta = 'Leia a palavra e toque na figura certa';
+    q.fala = q.pergunta;
+    q.visual = `<div class="palavra-grande">${esc(fmt(W[0]))}</div>`;
+    q.ops = [W,...distratores(pool,W,P.n-1)].map((o,i)=>({html:o[2],ok:i===0}));
+    q.classeOp='emo';
+    q.dica = ()=>{ const s1=W[1].split('-')[0]; dicaBox(`O começo soa assim: <b>${esc(fmt(s1))}</b>`); falar(falaSilaba(s1)); };
+    q.depois = {txt:`${fmt(W[0])} ${W[2]}`,fala:W[0].toLowerCase()};
+  }
+  else if(tipo==='montar1' || tipo==='montar2'){
+    const pool = tipo==='montar1'?PAL1:PAL2, W = pegarNovo(pool,x=>x[0]);
+    const sil = W[1].split('-');
+    const outras = [...new Set([].concat(...pool.filter(x=>x!==W).map(x=>x[1].split('-'))))].filter(s=>!sil.includes(s));
+    q.montar = {W,sil,pos:0,pecas:embaralhar([...sil,...amostra(outras,P.n-2)])};
+    q.pergunta = 'Monte a palavra, uma sílaba de cada vez';
+    q.fala = W[0].toLowerCase();
+    q.dica = ()=>{ dicaBox(`Escute as partes`); falar(sil.map(falaSilaba).join('... ')); };
+    q.depois = {txt:`${fmt(W[0])} ${W[2]}`,fala:W[0].toLowerCase()};
+  }
+  else { // frase1 / frase2
+    const pool = tipo==='frase1'?FRASE1:FRASE2, F = pegarNovo(pool,x=>x[0]);
+    const frase = F[0].replace(/\bDAVI\b/g,S.nome), perg = F[1].replace(/\bDavi\b/g,nomeBonito());
+    q.frase = fmt(frase); q.pergunta = perg; q.fala = perg;
+    q.ops = F[2].slice(0,Math.min(3,P.n)).map((o,i)=>({html:esc(fmt(o)),ok:i===0}));
+    q.umaColuna = true;
+    q.dica = ()=>{ dicaBox('Escute a frase inteira'); falar(frase.toLowerCase()); };
+    q.depois = {txt:'',fala:''};
+  }
+  if(q.ops) q.ops = embaralhar(q.ops);
+  return q;
+}
+function nomeBonito(){ return S.nome.charAt(0)+S.nome.slice(1).toLowerCase(); }
+function dicaBox(html){ let d=$('#j-visual .dica-box'); if(!d){ d=document.createElement('div'); d.className='dica-box'; $('#j-visual').appendChild(d);} d.innerHTML=html; }
+
+function renderDots(){
+  $('#j-dots').innerHTML = P.lances.map((_,i)=>`<i class="${i<P.i?(P.res[i]?'gol':'feito'):''} ${i===P.i?'agora':''}"></i>`).join('');
+  $('#j-gols').textContent = `⚽ ${P.gols}`;
+}
+function proximoLance(){
+  if(P.i>=P.lances.length) return fimPartida();
+  Q = gerar(P.lances[P.i]);
+  renderDots();
+  $('#j-bola').classList.remove('chute'); $('#j-goool').classList.remove('on');
+  $('#j-pergunta').textContent = Q.pergunta;
+  $('#j-feedback').textContent=''; $('#j-feedback').className='feedback';
+  $('#j-proximo').hidden = true;
+  $('#j-ouvir').hidden = !vozAtiva();
+  const vis = $('#j-visual'), area = $('#j-area');
+  if(Q.ouvirGrande && vozAtiva()) vis.innerHTML = `<button class="ouvir-grande" id="j-ouvir2" aria-label="Ouvir">🔊</button><div class="rotulo">Toque para ouvir</div>`;
+  else if(Q.frase) vis.innerHTML = `<div class="frase">${Q.frase.split(' ').map(w=>`<button class="palavra">${esc(w)}</button>`).join('')}</div><div class="rotulo">Toque numa palavra para ouvir</div>`;
+  else if(Q.montar) vis.innerHTML = `<div class="emoji-grande" aria-hidden="true">${Q.montar.W[2]}</div><div class="casas">${Q.montar.sil.map(()=>'<div class="casa"></div>').join('')}</div>`;
+  else vis.innerHTML = Q.visual || '';
+  if(Q.montar){
+    area.innerHTML = `<div class="pecas">${Q.montar.pecas.map((s,i)=>`<button class="peca" data-i="${i}">${esc(fmt(s))}</button>`).join('')}</div>`;
+    area.querySelectorAll('.peca').forEach(b=>b.onclick=()=>tocarPeca(b));
+  } else {
+    const cols = Q.umaColuna ? '' : Q.ops.length===3 ? 'c3' : 'c2';
+    area.innerHTML = `<div class="opcoes ${cols}">${Q.ops.map((o,i)=>`<button class="op ${Q.classeOp||''}" data-i="${i}" ${o.aria?`aria-label="${o.aria}"`:''}>${o.html}</button>`).join('')}</div>`;
+    area.querySelectorAll('.op').forEach(b=>b.onclick=()=>responder(b,Q.ops[+b.dataset.i]));
+  }
+  const o2=$('#j-ouvir2'); if(o2) o2.onclick=()=>falar(Q.fala);
+  vis.querySelectorAll('.palavra').forEach(b=>b.onclick=()=>{
+    vis.querySelectorAll('.palavra').forEach(x=>x.classList.remove('falando')); b.classList.add('falando');
+    falar(b.textContent.replace(/[.,!?]/g,'').toLowerCase()); });
+  setTimeout(()=>falar(Q.fala),350);
+}
+function responder(btn,op){
+  if(Q.feito || btn.disabled) return;
+  if(op.ok){ btn.classList.add('certo'); acertou(Q.erros===0); }
+  else {
+    Q.erros++; btn.classList.add('errado'); btn.disabled=true; som.trave();
+    quase('Quase! Tenta de novo.');
+    if(Q.erros>=2) document.querySelectorAll('#j-area .op').forEach(b=>{ if(Q.ops[+b.dataset.i].ok) b.classList.add('mostrar'); });
+  }
+}
+function tocarPeca(btn){
+  if(Q.feito) return;
+  const m = Q.montar, s = m.pecas[+btn.dataset.i];
+  if(s===m.sil[m.pos]){
+    btn.disabled=true; btn.classList.remove('mostrar');
+    const casa = document.querySelectorAll('#j-visual .casa')[m.pos]; casa.textContent=fmt(s); casa.classList.add('cheia');
+    m.pos++; som.encaixe(); falar(falaSilaba(s));
+    if(m.pos===m.sil.length) acertou(Q.erros<=1);
+  } else {
+    Q.erros++; btn.classList.remove('errado'); void btn.offsetWidth; btn.classList.add('errado'); som.trave();
+    quase('Quase! Qual parte vem agora?');
+    if(Q.erros>=2){ const certa=[...document.querySelectorAll('#j-area .peca')].find(b=>!b.disabled && m.pecas[+b.dataset.i]===m.sil[m.pos]); if(certa) certa.classList.add('mostrar'); }
+  }
+}
+function quase(t){ const f=$('#j-feedback'); f.textContent=t; f.className='feedback quase'; falar(t); }
+function acertou(gol){
+  Q.feito = true; P.res[P.i] = gol;
+  S.ritmo[P.ci] = [...S.ritmo[P.ci],gol?1:0].slice(-12);
+  const f=$('#j-feedback');
+  if(gol){
+    P.gols++; S.total++; S.gols[P.ci]++; S.stats[Q.skill]++;
+    const grito = Math.random()<.5 ? pick(IDOLOS[S.idolo]||GRITOS) : pick(GRITOS);
+    f.textContent = grito; f.className='feedback bom';
+    som.chute(); $('#j-bola').classList.add('chute');
+    const av = $('#j-avatar .avatar'); if(av && !S.cfg.calmo){ av.classList.remove('comemora'); void av.getBoundingClientRect(); av.classList.add('comemora'); }
+    setTimeout(()=>{ $('#j-goool').classList.add('on'); som.torcida(); },380);
+    falar(grito.replace('SIUUU','siiiiu'));
+  } else {
+    f.textContent = 'Acertou! Esse foi na trave, o próximo entra.'; f.className='feedback quase';
+    som.encaixe(); falar('Acertou! O próximo entra.');
+  }
+  if(Q.depois && Q.depois.txt){ dicaBox(`<span style="font-size:1.6rem;color:var(--cal);font-weight:700">${esc(Q.depois.txt)}</span>`); }
+  if(Q.depois && Q.depois.fala) falar(Q.depois.fala,true);
+  salvar(); renderDots();
+  $('#j-proximo').hidden = false; $('#j-proximo').textContent = P.i===P.lances.length-1 ? 'Apito final ▶' : 'Próximo lance ▶';
+}
+function fimPartida(){
+  som.apito();
+  const g = P.gols;
+  const [titulo,texto] = g===5 ? ['Atuação de craque!','5 gols em 5 lances. A torcida está de pé!']
+    : g>=3 ? ['Vitória!','Ótima partida. Continue assim que a promoção chega.']
+    : ['Bom treino!','Todo craque treina muito. A próxima partida vai ser melhor.'];
+  $('#f-gols').textContent = g; $('#f-titulo').textContent = titulo; $('#f-texto').textContent = texto;
+  const m=textoMeta(); $('#f-meta').textContent=m.txt; $('#f-barra').style.width=(m.p*100)+'%';
+  falar(`${titulo} Você fez ${g} ${g===1?'gol':'gols'}.`);
+  if(g>=3) confete();
+  // promoção só acontece na categoria atual da carreira
+  if(!fimCarreira() && P.ci===S.cat && S.gols[S.cat]>=CATS[S.cat].meta){
+    S.cat++; salvar(); setTimeout(promover,200); return;
+  }
+  salvar(); mostrar('fim');
+}
+function promover(){
+  const t = TIMES[S.time]||TIMES.Corinthians;
+  if(fimCarreira()){
+    $('#p-icone').textContent='🥇'; $('#p-titulo').textContent='BOLA DE OURO!';
+    $('#p-texto').textContent=`${nomeBonito()}, você virou o melhor leitor do mundo do futebol. ${t.grito}`;
+    falar(`Bola de Ouro! Parabéns, ${nomeBonito()}! ${t.grito}`);
+  } else {
+    $('#p-icone').textContent='🏆'; $('#p-titulo').textContent=CATS[S.cat].nome.toUpperCase();
+    $('#p-texto').textContent=`Agora o desafio é: ${CATS[S.cat].desc.toLowerCase()}. ${t.grito}`;
+    falar(`Parabéns, ${nomeBonito()}! Você subiu para o ${CATS[S.cat].nome}! ${t.grito}`);
+  }
+  som.festa(); confete(); mostrar('promo');
+}
+
+// ---------- Carreira ----------
+function renderCarreira(){
+  $('#c-lista').innerHTML = CATS.map((c,i)=>{
+    const lib = i<=S.cat, feito = i<S.cat, atual = i===S.cat;
+    return `<button class="degrau ${atual?'atual':''}" data-i="${i}" ${lib?'':'disabled'}>
+      <span class="ic">${feito?'✅':atual?'▶️':'🔒'}</span>
+      <span><h3>${c.nome}</h3><small>${c.desc}</small></span>
+      <span class="num">${Math.min(S.gols[i],c.meta)}/${c.meta}</span></button>`;
+  }).join('') + `<div class="degrau" ${fimCarreira()?'':'style="opacity:.45"'}><span class="ic">${fimCarreira()?'🥇':'🔒'}</span><span><h3>Bola de Ouro</h3><small>O topo da carreira</small></span><span></span></div>`;
+  $('#c-lista').querySelectorAll('button.degrau').forEach(b=>b.onclick=()=>iniciarPartida(+b.dataset.i));
+  mostrar('carreira');
+}
+
+// ---------- Ajustes ----------
+function grupoEscolha(el,lista,chave,aoMudar){
+  el.innerHTML = lista.map(n=>`<button class="escolha" aria-pressed="${S[chave]===n}">${esc(n)}</button>`).join('');
+  el.querySelectorAll('.escolha').forEach((b,i)=>b.onclick=()=>{ S[chave]=lista[i]; salvar();
+    el.querySelectorAll('.escolha').forEach(x=>x.setAttribute('aria-pressed',x===b)); if(aoMudar) aoMudar(); });
+}
+const CHAVES = [
+  ['voz','Voz do narrador','Lê as perguntas e as palavras em voz alta'],
+  ['lento','Voz mais devagar','Bom para palavras difíceis'],
+  ['minus','Letras minúsculas','Quando já conhecer bem as maiúsculas'],
+  ['calmo','Modo calmo','Sons mais baixos e sem confete']
+];
+function renderAjustes(){
+  $('#a-nome').value = S.nome;
+  grupoEscolha($('#a-idolo'),Object.keys(IDOLOS),'idolo');
+  grupoEscolha($('#a-time'),Object.keys(TIMES),'time');
+  const DIFS = [['auto','Automática'],['facil','Fácil'],['normal','Normal'],['dificil','Difícil']];
+  $('#a-dif').innerHTML = DIFS.map(([v,n])=>`<button class="escolha" data-v="${v}" aria-pressed="${S.cfg.dif===v}">${n}</button>`).join('');
+  $('#a-dif').querySelectorAll('.escolha').forEach(b=>b.onclick=()=>{ S.cfg.dif=b.dataset.v; salvar();
+    $('#a-dif').querySelectorAll('.escolha').forEach(x=>x.setAttribute('aria-pressed',x===b)); });
+  $('#a-chaves').innerHTML = CHAVES.map(([k,t,d])=>`<div class="chave"><span>${t}<small>${d}</small></span>
+    <button data-k="${k}" aria-pressed="${S.cfg[k]}">${S.cfg[k]?'Ligado':'Desligado'}</button></div>`).join('')
+    + (temVoz?'':'<p class="rotulo">Este navegador não tem voz. O jogo mostra o texto na tela.</p>');
+  $('#a-chaves').querySelectorAll('button').forEach(b=>b.onclick=()=>{ const k=b.dataset.k; S.cfg[k]=!S.cfg[k]; salvar();
+    b.setAttribute('aria-pressed',S.cfg[k]); b.textContent=S.cfg[k]?'Ligado':'Desligado'; if(k==='voz'&&S.cfg.voz) falar('Voz ligada'); });
+  $('#a-confirma').hidden = true; $('#a-zerar').hidden = false;
+  mostrar('ajustes');
+}
+function lerNome(inp){ const n = inp.value.trim().toUpperCase().replace(/[^A-ZÀ-Ú ]/g,'').slice(0,12); return n || 'DAVI'; }
+
+// ---------- Ligações ----------
+$('#h-jogar').onclick = ()=>{ audio(); iniciarPartida(null); };
+$('#h-carreira').onclick = renderCarreira;
+$('#h-jogador').onclick = renderJogador;
+$('#m-voltar').onclick = renderHome;
+$('#h-ajustes').onclick = renderAjustes;
+$('#c-voltar').onclick = renderHome;
+$('#a-voltar').onclick = ()=>{ S.nome = lerNome($('#a-nome')); salvar(); renderHome(); };
+$('#a-zerar').onclick = ()=>{ $('#a-confirma').hidden=false; $('#a-zerar').hidden=true; };
+$('#a-nao').onclick = ()=>{ $('#a-confirma').hidden=true; $('#a-zerar').hidden=false; };
+$('#a-sim').onclick = ()=>{ const n=S.nome,i=S.idolo,t=S.time,c=S.cfg,a=S.avatar; S=padrao(); Object.assign(S,{novo:false,nome:n,idolo:i,time:t,cfg:c,avatar:a}); salvar(); renderHome(); };
+$('#j-sair').onclick = ()=>{ try{speechSynthesis.cancel();}catch(e){} renderHome(); };
+$('#j-ouvir').onclick = ()=>falar(Q.fala);
+$('#j-dica').onclick = ()=>{ if(Q && Q.dica) Q.dica(); };
+$('#j-proximo').onclick = ()=>{ P.i++; proximoLance(); };
+$('#f-voltar').onclick = renderHome;
+$('#f-denovo').onclick = ()=>iniciarPartida(P.livre?null:P.ci);
+$('#p-ok').onclick = renderHome;
+$('#bv-ok').onclick = ()=>{ audio(); S.nome = lerNome($('#bv-nome')); S.novo=false; salvar(); falar(`Bem-vindo ao time, ${nomeBonito()}!`); renderHome(); };
+
+if(S.novo){
+  grupoEscolha($('#bv-idolo'),Object.keys(IDOLOS),'idolo');
+  grupoEscolha($('#bv-time'),Object.keys(TIMES),'time');
+  mostrar('boasvindas');
+} else renderHome();
+</script>
+
+<script>if('serviceWorker' in navigator) addEventListener('load',()=>navigator.serviceWorker.register('sw.js'));</script>
+</body>
+</html>
